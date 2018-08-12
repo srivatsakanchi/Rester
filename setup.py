@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 
 setup(name='Rester',
     version='1.0.1',
@@ -14,4 +15,6 @@ setup(name='Rester',
     description='Rest API Testing',
     long_description=open('README.md').read(),
     install_requires=["requests", "testfixtures", "PyYAML>=3.9"],
+    use_2to3= sys.version_info.major >= 3,
 )
+
