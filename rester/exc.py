@@ -5,6 +5,7 @@ from testfixtures import log_capture
 import collections
 import re
 import traceback
+from time import sleep
 
 
 Failure = collections.namedtuple("Failure", "errors output")
@@ -61,7 +62,8 @@ class TestCaseExec(object):
     def _build_param_dict(self, test_step):
         params = {}
         if hasattr(test_step, 'params') and test_step.params is not None:
-            for key, value in test_step.params.items().items():
+            dct= test_step.params.items()
+            for key, value in dct.items():
                 params[key] = self.case.variables.expand(value)
         return params
 
@@ -77,7 +79,8 @@ class TestCaseExec(object):
             headers = {}
             if hasattr(test_step, 'headers') and test_step.headers is not None:
                 self.logger.debug('Found Headers')
-                for key, value in test_step.headers.items().items():
+                dct= test_step.headers.items()
+                for key, value in dct.items():
                     headers[key] = self.case.variables.expand(value)
 
             # process and set up params
@@ -85,23 +88,37 @@ class TestCaseExec(object):
 
             url = self.case.variables.expand(test_step.apiUrl)
             self.logger.debug('Evaluated URL : %s', url)
-            response_wrapper = http_client.request(url, method, headers, params, is_raw)
+            
+            loop_times, loop_interval = (1, 0)
+            if hasattr(test_step, 'loop') and test_step.loop is not None:
+                loop_times, loop_interval = test_step.loop
+            
+            for times in range(loop_times): 
+                response_wrapper = http_client.request(url, method, headers, params, is_raw)
+    
+                # expected_status = getattr(getattr(test_step, 'asserts'), 'status', 200)
+                # if response_wrapper.status != expected_status:
+                #     failures.errors.append("status(%s) != expected status(%s)" % (response_wrapper.status, expected_status))
+    
+                if hasattr(test_step, "asserts"):
+                    asserts = test_step.asserts
+                    if hasattr(asserts, "headers"):
+                        dct= test_step.asserts.headers.items()
+                        if not self._assert_element_list('Header', failures, test_step, response_wrapper.headers, dct.items()):
+                            break
+                        
+                    if hasattr(asserts, "payload"):
+                        dct= test_step.asserts.payload.items()
+                        self.logger.debug('Evaluating Response Payload')
+                        if self._assert_element_list('Payload', failures, test_step, response_wrapper.body, dct.items()):
+                            break
 
-            # expected_status = getattr(getattr(test_step, 'asserts'), 'status', 200)
-            # if response_wrapper.status != expected_status:
-            #     failures.errors.append("status(%s) != expected status(%s)" % (response_wrapper.status, expected_status))
-
-            if hasattr(test_step, "asserts"):
-                asserts = test_step.asserts
-                if hasattr(asserts, "headers"):
-                    self._assert_element_list('Header', failures, test_step, response_wrapper.headers, test_step.asserts.headers.items().items())
-
-                if hasattr(asserts, "payload"):
-                    self.logger.debug('Evaluating Response Payload')
-                    self._assert_element_list('Payload', failures, test_step, response_wrapper.body, test_step.asserts.payload.items().items())
-            else:
-                self.logger.warn('\n=======> No "asserts" element found in TestStep %s', test_step.name)
-
+                else:
+                    self.logger.warn('\n=======> No "asserts" element found in TestStep %s', test_step.name)
+                    break
+                
+                sleep(loop_interval)
+                 
         except Exception as inst:
             failures.errors.append(traceback.format_exc())
             self.logger.error('ERROR !!! TestStep %s Failed to execute !!!  %s \
@@ -112,8 +129,9 @@ class TestCaseExec(object):
             return failures
         
         # execute all the assignment statements
-        if hasattr(test_step, 'postAsserts') and test_step.postAsserts is not None:          
-            for key, value in test_step.postAsserts.items().items():
+        if hasattr(test_step, 'postAsserts') and test_step.postAsserts is not None:
+            dct= test_step.postAsserts.items()
+            for key, value in dct.items():
                 self._process_post_asserts(response_wrapper.body, key, value)
 
         return None
@@ -193,6 +211,8 @@ class TestCaseExec(object):
             else:
                 assert_message = '{} Assert Statement : {}  ----> Pass!'.format(section, assert_literal_expr)
                 self.logger.info('%s', assert_message)
+            
+            return assert_result
 
     def _process_post_asserts(self, response, key, value):
         self.logger.debug("evaled value: {}".format(getattr(response, value, '')))
