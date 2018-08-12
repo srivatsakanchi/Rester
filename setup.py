@@ -3,9 +3,9 @@ import sys
 
 setup(name='Rester',
     version='1.0.1',
-    author='Rajeev Chitamoor',
-    author_email='rajeev@chitamoor.com',
-    url='https://github.com/chitamoor/rester',
+    author='Srivatsa Kanchi',
+    author_email='srivatsa.kanchiv@yahoo.com',
+    url='https://github.com/srivatsakanchi/rester',
     license='LICENSE.txt',
     packages=['rester'],
     entry_points={
