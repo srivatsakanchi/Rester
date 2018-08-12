@@ -4,7 +4,7 @@ import sys
 setup(name='Rester',
     version='1.0.1',
     author='Srivatsa Kanchi',
-    author_email='srivatsa.kanchiv@yahoo.com',
+    author_email='srivatsa.kanchi@yahoo.com',
     url='https://github.com/srivatsakanchi/rester',
     license='LICENSE.txt',
     packages=['rester'],
