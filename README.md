@@ -541,7 +541,10 @@ Nino Walker - nino@livefyre.com
 - Breaking change: `__raw__` to `raw` on the *TestStep*.
 - Feature: `status` to *TestStep.asserts*, allowing for non-200
   replies.
-
+- Added `loop` to the *TestStep*. `loop` takes a list of two values [<loop_times>, <loop_interval>]
+  The loop is run until the `payload` assert is `True` or the loop times is over. On every loop, waits for `loop_interval`
+  seconds.
+  
 #TODO
 - Use meta-programming to allow direct integration into unittest
   frameworks, and run with tests a la `nose`, to leverage all the things.
